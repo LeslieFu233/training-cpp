@@ -1,8 +1,8 @@
 #include "../exercise.h"
 
 #include <iostream>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 // READ: RAII <https://lb3fn675fh.feishu.cn/wiki/FI6uwuRBbi30mbkbDTIcvyF3nAf>
 
@@ -46,33 +46,36 @@ struct MockResource {
 // 5. 提供一个重载的 -> 运算符，以便通过 ResourceGuard 对象直接调用 MockResource 的方法。
 
 class ResourceGuard {
-    MockResource* resource_ptr;
+    MockResource *resource_ptr;
 
 public:
     // 构造函数：获取资源
-    explicit ResourceGuard(MockResource* res) : resource_ptr(res) {
+    explicit ResourceGuard(MockResource *res) : resource_ptr(res) {
         if (resource_ptr) {
-            resource_ptr->acquire(); // 调用 acquire
+            resource_ptr->acquire();// 调用 acquire
         }
     }
 
     // 析构函数：释放资源
     ~ResourceGuard() {
         // TODO: 释放资源
+        if (resource_ptr) {
+            resource_ptr->release();
+        }
     }
 
     // 禁止拷贝构造
-    ResourceGuard(const ResourceGuard&) = delete;
+    ResourceGuard(const ResourceGuard &) = delete;
     // 禁止拷贝赋值
-    ResourceGuard& operator=(const ResourceGuard&) = delete;
+    ResourceGuard &operator=(const ResourceGuard &) = delete;
 
     // 允许移动构造
-    ResourceGuard(ResourceGuard&& other) noexcept : resource_ptr(other.resource_ptr) {
-        other.resource_ptr = nullptr; // 源对象不再拥有资源
+    ResourceGuard(ResourceGuard &&other) noexcept : resource_ptr(other.resource_ptr) {
+        other.resource_ptr = nullptr;// 源对象不再拥有资源
     }
 
     // 允许移动赋值
-    ResourceGuard& operator=(ResourceGuard&& other) noexcept {
+    ResourceGuard &operator=(ResourceGuard &&other) noexcept {
         if (this != &other) {
             // 释放当前持有的资源 (如果有)
             if (resource_ptr) {
@@ -87,12 +90,12 @@ public:
 
 
     // 获取底层资源指针
-    MockResource* get() const {
-        return ?;
+    MockResource *get() const {
+        return resource_ptr;
     }
 
     // 重载 -> 运算符
-    MockResource* operator->() const {
+    MockResource *operator->() const {
         return resource_ptr;
     }
 };
@@ -109,7 +112,7 @@ int main(int argc, char **argv) {
         ASSERT(res1.released == false, "构造 ResourceGuard 后：应未释放");
 
         // 通过 get() 方法访问资源
-        MockResource* raw_ptr = guard.get();
+        MockResource *raw_ptr = guard.get();
         ASSERT(raw_ptr == &res1, "get() 应返回底层指针");
         raw_ptr->use();
 
@@ -117,7 +120,7 @@ int main(int argc, char **argv) {
         guard->use();
         ASSERT(guard->name == "文件句柄", "通过 -> 访问 name");
 
-    } // guard 在这里离开作用域，析构函数被调用
+    }// guard 在这里离开作用域，析构函数被调用
 
     ASSERT(res1.acquired == true, "离开作用域后：应已获取");
     ASSERT(res1.released == true, "离开作用域后：应已释放");
@@ -135,7 +138,7 @@ int main(int argc, char **argv) {
         throw std::runtime_error("发生了一个错误！");
         // 下面的代码不会被执行
         std::cout << "这行代码不应被打印。" << std::endl;
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         std::cout << "捕获到异常: " << e.what() << std::endl;
     }
 

@@ -1,5 +1,6 @@
 ﻿#include "../exercise.h"
 #include <cstring>
+#include <stdexcept>
 // READ: 类模板 <https://zh.cppreference.com/w/cpp/language/class_template>
 
 template<class T>
@@ -7,11 +8,20 @@ struct Tensor4D {
     unsigned int shape[4];
     T *data;
 
+    unsigned int shape_2_3_;
+    unsigned int shape_1_2_3_;
+    unsigned int size_;
+
     Tensor4D(unsigned int const shape_[4], T const *data_) {
         unsigned int size = 1;
         // TODO: 填入正确的 shape 并计算 size
+        std::memcpy(shape, shape_, 4 * sizeof(unsigned int));
+        size = size * shape[0] * shape[1] * shape[2] * shape[3];
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
+        shape_2_3_ = shape[2] * shape[3];
+        shape_1_2_3_ = shape[1] * shape[2] * shape[3];
+        size_ = size;
     }
     ~Tensor4D() {
         delete[] data;
@@ -26,8 +36,33 @@ struct Tensor4D {
     // `others` 长度为 1 但 `this` 长度不为 1 的维度将发生广播计算。
     // 例如，`this` 形状为 `[1, 2, 3, 4]`，`others` 形状为 `[1, 2, 1, 4]`，
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
+    T &get_elem(unsigned int x0, unsigned int x1, unsigned int x2, unsigned int x3) const {
+        unsigned int loc = x3 + x2 * shape[3] + x1 * shape_2_3_ + x0 * shape_1_2_3_;
+        if (loc < 0 || loc >= size_) {
+            throw std::out_of_range("Tensor4D: index out of range");
+        }
+        return data[loc];
+    }
     Tensor4D &operator+=(Tensor4D const &others) {
-        // TODO: 实现单向广播的加法
+        if ((others.shape[0] != shape[0] && others.shape[0] != 1) ||
+            (others.shape[1] != shape[1] && others.shape[1] != 1) ||
+            (others.shape[2] != shape[2] && others.shape[2] != 1) ||
+            (others.shape[3] != shape[3] && others.shape[3] != 1)) {
+            return *this;
+        }
+        for (unsigned int a = 0; a < shape[0]; a++) {
+            for (unsigned int b = 0; b < shape[1]; b++) {
+                for (unsigned int c = 0; c < shape[2]; c++) {
+                    for (unsigned int d = 0; d < shape[3]; d++) {
+                        unsigned int oa = (others.shape[0] == 1) ? 0 : a;
+                        unsigned int ob = (others.shape[1] == 1) ? 0 : b;
+                        unsigned int oc = (others.shape[2] == 1) ? 0 : c;
+                        unsigned int od = (others.shape[3] == 1) ? 0 : d;
+                        this->get_elem(a, b, c, d) += others.get_elem(oa, ob, oc, od);
+                    }
+                }
+            }
+        }
         return *this;
     }
 };

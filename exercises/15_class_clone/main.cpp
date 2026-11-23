@@ -1,26 +1,40 @@
 #include "../exercise.h"
-
+#include <cstring>
 // READ: 复制构造函数 <https://zh.cppreference.com/w/cpp/language/copy_constructor>
 // READ: 函数定义（显式弃置）<https://zh.cppreference.com/w/cpp/language/function>
 
 
 class DynFibonacci {
+    int capacity_;
     size_t *cache;
     int cached;
 
 public:
     // TODO: 实现动态设置容量的构造器
-    DynFibonacci(int capacity): cache(new ?), cached(?) {}
+    DynFibonacci(int capacity) : capacity_(capacity), cache(new size_t[capacity]), cached(2) {
+        ASSERT(capacity >= 3, "capacity>=3");
+        cache[0] = 0;
+        cache[1] = 1;
+    }
 
     // TODO: 实现复制构造器
-    DynFibonacci(DynFibonacci const &) = delete;
+    // 这里注意要对动态内存拷贝，创建一块新的内存就可以，这里是构造不是赋值，所以是在新对象操作，无需释放原来的
+    DynFibonacci(DynFibonacci const &other) : capacity_(other.capacity_), cache(new size_t[other.capacity_]), cached(other.cached) {
+        std::memcpy(cache, other.cache, sizeof(size_t) * capacity_);
+    }
 
     // TODO: 实现析构器，释放缓存空间
-    ~DynFibonacci();
+    ~DynFibonacci() {
+        if (cache != nullptr) {
+            delete[] cache;
+            cache = nullptr;
+        }
+    }
 
     // TODO: 实现正确的缓存优化斐波那契计算
     size_t get(int i) {
-        for (; false; ++cached) {
+        ASSERT(i < capacity_, "i < capacity_");
+        for (; cached <= i; cached++) {
             cache[cached] = cache[cached - 1] + cache[cached - 2];
         }
         return cache[i];
@@ -40,6 +54,7 @@ public:
 
 int main(int argc, char **argv) {
     DynFibonacci fib(12);
+    std::cout << fib.get(10) << "\n";
     ASSERT(fib.get(10) == 55, "fibonacci(10) should be 55");
     DynFibonacci const fib_ = fib;
     ASSERT(fib_.get(10) == fib.get(10), "Object cloned");
