@@ -24,6 +24,10 @@ class ThreadPool {
 public:
     explicit ThreadPool(size_t num_threads) {
         // TODO: 初始化线程池，创建指定数量的线程
+        for (int i=0;i<num_threads)
+        {
+            threads_.emplace_back();
+        }
     }
 
     // 禁止拷贝和移动
@@ -50,6 +54,8 @@ public:
     void join() {
         // TODO: 等待所有任务完成
     }
+private:
+    std::vector<std::thread> threads_;
 };
 
 // TODO: 将下列 `?` 替换为正确的代码
@@ -65,13 +71,13 @@ int main(int argc, char **argv) {
     // 2. 向线程池提交一个简单的任务 (增加计数器)
     std::future<void> future1 = pool.enqueue(increment_counter);
     future1.get();// 等待任务完成
-    ASSERT(counter.load() == ?, "Counter should be 1 after one task");
+    ASSERT(counter.load() == 1, "Counter should be 1 after one task");
 
     // 3. 提交一个返回值的任务
     auto multiply = [](int a, int b) { return a * b; };
     std::future<int> future2 = pool.enqueue(multiply, 5, 6);
     int result = future2.get();// 等待并获取结果
-    ASSERT(result == ?, "Result of 5 * 6 should be 30");
+    ASSERT(result == 30, "Result of 5 * 6 should be 30");
 
     // 4. 提交多个任务
     std::vector<std::future<void>> futures;
@@ -86,7 +92,7 @@ int main(int argc, char **argv) {
     }
 
     // 验证计数器的最终值 (初始为1，加上10次递增)
-    ASSERT(counter.load() == ?, "Counter should be 11 after 10 more tasks");
+    ASSERT(counter.load() == 11, "Counter should be 11 after 10 more tasks");
 
     // 5. 线程池析构函数会自动停止并Join所有线程
     // (无需显式调用 stop 或 join)
